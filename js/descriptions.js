@@ -1,19 +1,45 @@
-function parseTweets(runkeeper_tweets) {
-	//Do not proceed if no tweets loaded
-	if(runkeeper_tweets === undefined) {
-		window.alert('No tweets returned');
-		return;
-	}
+/* js/descriptions.js
+ * Part 3 — Live text search over user-written tweets
+ * Fills/updates:
+ *   #searchCount, #searchText, and <tbody id="tweetTable">
+ * Input:
+ *   #textFilter (updates on every keystroke)
+ *
+ * Assumes:
+ * - RUNKEEPER_TWEETS global + Tweet class
+ */
 
-	//TODO: Filter to just the written tweets
-}
+(function main() {
+  const tweets = RUNKEEPER_TWEETS.map(t => new Tweet(t.text, t.created_at));
+  const userWritten = tweets.filter(t => t.written);
 
-function addEventHandlerForSearch() {
-	//TODO: Search the written tweets as text is entered into the search box, and add them to the table
-}
+  const input   = document.querySelector("#textFilter");
+  const countEl = document.querySelector("#searchCount");
+  const textEl  = document.querySelector("#searchText");
+  const tbody   = document.querySelector("#tweetTable");
 
-//Wait for the DOM to load
-document.addEventListener('DOMContentLoaded', function (event) {
-	addEventHandlerForSearch();
-	loadSavedRunkeeperTweets().then(parseTweets);
-});
+  const renderRows = (rowsHtml) => { tbody.innerHTML = rowsHtml; };
+
+  function search(queryRaw) {
+    const q = (queryRaw ?? "").trim();
+    if (q === "") {
+      countEl.textContent = "0";
+      textEl.textContent = "";
+      renderRows("");
+      return;
+    }
+
+    const qLower = q.toLowerCase();
+    const matches = userWritten.filter(t => t.writtenText.toLowerCase().includes(qLower));
+
+    countEl.textContent = String(matches.length);
+    textEl.textContent = q;
+
+    // Row number is 1-based in UI; we can just index within filtered list
+    const html = matches.map((t, i) => t.getHTMLTableRow(i)).join("");
+    renderRows(html);
+  }
+
+  // Update on every keystroke
+  input.addEventListener("input", (e) => search(e.target.value));
+})();
